@@ -131,6 +131,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
           <div className="flex flex-col gap-2">
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Disclosed Claims</p>
             <CredentialClaimsPanel data={credData} />
+            <JsonPanel label="Disclosed Claims (raw)" data={credData} />
           </div>
         )}
 
@@ -164,6 +165,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
           <div className="flex flex-col gap-2">
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Disclosed Claims</p>
             <CredentialClaimsPanel data={credData} />
+            <JsonPanel label="Disclosed Claims (raw)" data={credData} />
           </div>
         </div>
       )
