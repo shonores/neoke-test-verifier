@@ -1,4 +1,5 @@
-import { Config, CreateRequestResponse, ConsentResponse, QueueItem } from '../types'
+import { GetToken, CreateRequestResponse, ConsentResponse, QueueItem } from '../types'
+import { deriveNodeHost } from '../hooks/useAuth'
 
 async function apiFetch(url: string, options: RequestInit = {}): Promise<{ data: unknown; status: number; raw: string }> {
   const res = await fetch(url, options)
@@ -12,21 +13,28 @@ async function apiFetch(url: string, options: RequestInit = {}): Promise<{ data:
   return { data, status: res.status, raw }
 }
 
+async function resolveToken(getToken: GetToken): Promise<{ token: string } | { error: string }> {
+  return getToken()
+}
+
 export async function createVpRequest(
-  config: Config,
+  nodeId: string,
+  getToken: GetToken,
   dcqlQuery: object
 ): Promise<{ result?: CreateRequestResponse; error?: string; status?: number; raw?: string }> {
-  const url = `https://${config.myNodeHost}/:/auth/siop/request`
+  const tokenResult = await resolveToken(getToken)
+  if ('error' in tokenResult) return { error: tokenResult.error }
+
+  const url = `https://${deriveNodeHost(nodeId)}/:/auth/siop/request`
   try {
     const { data, status, raw } = await apiFetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${config.myApiKey}`,
+        'Authorization': `Bearer ${tokenResult.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ dcqlQuery }),
     })
-
     if (status >= 200 && status < 300) {
       const d = data as Record<string, unknown>
       return {
@@ -43,37 +51,39 @@ export async function createVpRequest(
   }
 }
 
-export async function sendToWallet(
-  config: Config,
-  rawLink: string
-): Promise<{ result?: ConsentResponse; error?: string; status?: number; raw?: string }> {
-  const url = `${config.targetCeUrl}/consent/request`
+export async function fetchVpResponse(
+  nodeId: string,
+  getToken: GetToken,
+  sessionId: string
+): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
+  const tokenResult = await resolveToken(getToken)
+  if ('error' in tokenResult) return { error: tokenResult.error }
+
+  const url = `https://${deriveNodeHost(nodeId)}/:/auth/siop/request/${sessionId}/response`
   try {
     const { data, status, raw } = await apiFetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: config.targetWalletDid, rawLink }),
+      headers: { 'Authorization': `Bearer ${tokenResult.token}` },
     })
-
-    if (status >= 200 && status < 300) {
-      return { result: data as ConsentResponse }
-    }
+    if (status >= 200 && status < 300) return { data }
     return { error: `HTTP ${status}`, status, raw }
   } catch (e) {
     return { error: String(e) }
   }
 }
 
-export async function fetchVpResponse(
-  config: Config,
-  sessionId: string
-): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const url = `https://${config.myNodeHost}/:/auth/siop/request/${sessionId}/response`
+export async function sendToWallet(
+  ceUrl: string,
+  targetWalletDid: string,
+  rawLink: string
+): Promise<{ result?: ConsentResponse; error?: string; status?: number; raw?: string }> {
+  const url = `${ceUrl}/consent/request`
   try {
     const { data, status, raw } = await apiFetch(url, {
-      headers: { 'Authorization': `Bearer ${config.myApiKey}` },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: targetWalletDid, rawLink }),
     })
-    if (status >= 200 && status < 300) return { data }
+    if (status >= 200 && status < 300) return { result: data as ConsentResponse }
     return { error: `HTTP ${status}`, status, raw }
   } catch (e) {
     return { error: String(e) }

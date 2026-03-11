@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Config } from '../types'
 
 const STORAGE_KEY = 'neoke_verifier_config'
 
 const DEFAULTS: Config = {
-  myNodeId: 'sebastian',
-  myNodeHost: 'b2b-poc.id-node.neoke.com',
-  myApiKey: '',
-  targetWalletDid: 'did:web:b2b-poc.id-node.neoke.com',
-  targetCeUrl: 'https://neoke-consent-engine.fly.dev',
-  ceAdminKey: '',
+  nodeId: '',
+  apiKey: '',
 }
 
 export function useConfig() {

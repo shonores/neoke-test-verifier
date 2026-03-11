@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Tab, ConsentResponse, HistoryEntry } from './types'
 import { useConfig } from './hooks/useConfig'
+import { useAuth } from './hooks/useAuth'
 import { useHistory } from './hooks/useHistory'
 import { ConfigPanel } from './components/ConfigPanel'
 import { CreateRequestTab } from './components/CreateRequestTab'
@@ -9,9 +10,14 @@ import { SendToWallet } from './components/SendToWallet'
 import { ResponsePanel } from './components/ResponsePanel'
 import { HistoryPanel } from './components/HistoryPanel'
 
+const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev'
+
 type FlowState = {
   sessionId?: string
   rawLink?: string
+  targetWalletDid?: string
+  ceUrl?: string
+  ceAdminKey?: string
   ceResponse?: ConsentResponse
   credentialData?: unknown
   historyEntryId?: string
@@ -19,23 +25,24 @@ type FlowState = {
 
 export default function App() {
   const { config, saveConfig } = useConfig()
+  const { getToken } = useAuth(config)
   const { history, addEntry, updateEntry, clearHistory } = useHistory()
   const [tab, setTab] = useState<Tab>('create')
   const [flow, setFlow] = useState<FlowState>({})
 
   const resetFlow = () => setFlow({})
 
-  const handleCreated = (sessionId: string, rawLink: string) => {
-    setFlow({ sessionId, rawLink })
+  const handleCreated = (sessionId: string, rawLink: string, targetWalletDid: string, ceUrl: string, ceAdminKey: string) => {
+    setFlow({ sessionId, rawLink, targetWalletDid, ceUrl, ceAdminKey })
   }
 
   const handleLinkReady = (rawLink: string) => {
-    setFlow({ rawLink })
+    setFlow({ rawLink, ceUrl: DEFAULT_CE_URL, ceAdminKey: '' })
   }
 
   const handleCeResponse = (response: ConsentResponse) => {
     const entryId = addEntry({
-      targetDid: config.targetWalletDid,
+      targetDid: flow.targetWalletDid ?? '',
       sessionId: flow.sessionId,
       rawLink: flow.rawLink,
       outcome: response.outcome,
@@ -54,10 +61,11 @@ export default function App() {
     setFlow({
       sessionId: entry.sessionId,
       rawLink: entry.rawLink,
+      targetWalletDid: entry.targetDid,
+      ceUrl: DEFAULT_CE_URL,
+      ceAdminKey: '',
     })
-    if (entry.rawLink) {
-      setTab('existing')
-    }
+    setTab('existing')
   }
 
   return (
@@ -78,7 +86,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Config */}
+        {/* Config — node ID + API key only */}
         <ConfigPanel config={config} onSave={saveConfig} />
 
         {/* Tabs */}
@@ -102,8 +110,9 @@ export default function App() {
           <div className="border border-slate-700 rounded-xl p-5 bg-slate-900">
             {tab === 'create' ? (
               <CreateRequestTab
-                config={config}
-                onCreated={(sessionId, rawLink) => handleCreated(sessionId, rawLink)}
+                nodeId={config.nodeId}
+                getToken={getToken}
+                onCreated={handleCreated}
               />
             ) : (
               <ExistingLinkTab onReady={handleLinkReady} />
@@ -114,19 +123,23 @@ export default function App() {
         {/* Send to Wallet */}
         {flow.rawLink && !flow.ceResponse && (
           <SendToWallet
-            config={config}
+            ceUrl={flow.ceUrl ?? DEFAULT_CE_URL}
+            targetWalletDid={flow.targetWalletDid ?? ''}
             rawLink={flow.rawLink}
             sessionId={flow.sessionId}
-            onResponse={(response) => handleCeResponse(response)}
+            onResponse={handleCeResponse}
           />
         )}
 
         {/* Response */}
         {flow.ceResponse && (
           <ResponsePanel
-            config={config}
+            nodeId={config.nodeId}
+            getToken={getToken}
             sessionId={flow.sessionId}
             response={flow.ceResponse}
+            ceUrl={flow.ceUrl ?? DEFAULT_CE_URL}
+            ceAdminKey={flow.ceAdminKey ?? ''}
             onCredentialData={handleCredentialData}
           />
         )}

@@ -1,17 +1,20 @@
-import { Config, ConsentResponse } from '../types'
-import { fetchVpResponse } from '../api'
 import { useState } from 'react'
+import { GetToken, ConsentResponse } from '../types'
+import { fetchVpResponse } from '../api'
 import { JsonPanel } from './JsonPanel'
 import { PollingPanel } from './PollingPanel'
 
 interface Props {
-  config: Config
+  nodeId: string
+  getToken: GetToken
   sessionId?: string
   response: ConsentResponse
+  ceUrl: string
+  ceAdminKey: string
   onCredentialData: (data: unknown) => void
 }
 
-export function ResponsePanel({ config, sessionId, response, onCredentialData }: Props) {
+export function ResponsePanel({ nodeId, getToken, sessionId, response, ceUrl, ceAdminKey, onCredentialData }: Props) {
   const [credData, setCredData] = useState<unknown>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -21,7 +24,7 @@ export function ResponsePanel({ config, sessionId, response, onCredentialData }:
     if (!sessionId) return
     setLoading(true)
     setFetchError(null)
-    const { data, error, raw } = await fetchVpResponse(config, sessionId)
+    const { data, error, raw } = await fetchVpResponse(nodeId, getToken, sessionId)
     setLoading(false)
     if (error) {
       setFetchError(`${error}${raw ? `\n${raw}` : ''}`)
@@ -94,7 +97,10 @@ export function ResponsePanel({ config, sessionId, response, onCredentialData }:
 
     return (
       <PollingPanel
-        config={config}
+        nodeId={nodeId}
+        getToken={getToken}
+        ceUrl={ceUrl}
+        ceAdminKey={ceAdminKey}
         queueItemId={response.queuedItem!.id}
         sessionId={sessionId}
         queuePreview={response.queuedItem}
@@ -130,7 +136,5 @@ export function ResponsePanel({ config, sessionId, response, onCredentialData }:
     )
   }
 
-  return (
-    <JsonPanel label="Unknown CE Response" data={response} defaultOpen />
-  )
+  return <JsonPanel label="Unknown CE Response" data={response} defaultOpen />
 }

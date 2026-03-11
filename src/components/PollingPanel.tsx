@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { Config, QueueItem } from '../types'
+import { GetToken, QueueItem } from '../types'
 import { pollQueueItem, fetchVpResponse } from '../api'
 import { JsonPanel } from './JsonPanel'
 
 interface Props {
-  config: Config
+  nodeId: string
+  getToken: GetToken
+  ceUrl: string
+  ceAdminKey: string
   queueItemId: string
   sessionId?: string
   queuePreview?: { issuer?: string; credentialTypes?: string[]; requestedClaims?: string[] }
@@ -15,7 +18,7 @@ interface Props {
 const POLL_INTERVAL_MS = 5000
 const MAX_ATTEMPTS = 60
 
-export function PollingPanel({ config, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
+export function PollingPanel({ nodeId, getToken, ceUrl, ceAdminKey, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
   const [attempts, setAttempts] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -24,15 +27,15 @@ export function PollingPanel({ config, queueItemId, sessionId, queuePreview, onR
   const [pollError, setPollError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startTime = useRef(Date.now())
+  const attemptsRef = useRef(0)
 
   useEffect(() => {
     if (cancelled) return
 
     const tick = async () => {
-      const now = Math.floor((Date.now() - startTime.current) / 1000)
-      setElapsed(now)
+      setElapsed(Math.floor((Date.now() - startTime.current) / 1000))
 
-      const { item, error } = await pollQueueItem(config.targetCeUrl, queueItemId, config.ceAdminKey)
+      const { item, error } = await pollQueueItem(ceUrl, queueItemId, ceAdminKey)
 
       if (error) {
         setPollError(error)
@@ -42,12 +45,13 @@ export function PollingPanel({ config, queueItemId, sessionId, queuePreview, onR
       if (item) {
         setLastItem(item)
         setStatus(item.status)
-        setAttempts(a => a + 1)
+        attemptsRef.current += 1
+        setAttempts(attemptsRef.current)
 
         if (item.status === 'approved') {
           clearInterval(intervalRef.current!)
           if (sessionId) {
-            const { data } = await fetchVpResponse(config, sessionId)
+            const { data } = await fetchVpResponse(nodeId, getToken, sessionId)
             onResolved(data)
           } else {
             onResolved(item)
@@ -62,7 +66,7 @@ export function PollingPanel({ config, queueItemId, sessionId, queuePreview, onR
         }
       }
 
-      if (attempts + 1 >= MAX_ATTEMPTS) {
+      if (attemptsRef.current >= MAX_ATTEMPTS) {
         clearInterval(intervalRef.current!)
         onRejected('Polling timed out after 5 minutes')
       }

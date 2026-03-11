@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { Config, ConsentResponse } from '../types'
+import { ConsentResponse } from '../types'
 import { sendToWallet } from '../api'
 import { CopyChip } from './CopyChip'
 import { JsonPanel } from './JsonPanel'
 
 interface Props {
-  config: Config
+  ceUrl: string
+  targetWalletDid: string
   rawLink: string
   sessionId?: string
-  onResponse: (response: ConsentResponse, rawData: object) => void
+  onResponse: (response: ConsentResponse) => void
 }
 
-export function SendToWallet({ config, rawLink, sessionId, onResponse }: Props) {
+export function SendToWallet({ ceUrl, targetWalletDid, rawLink, sessionId, onResponse }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rawRes, setRawRes] = useState<unknown>(null)
@@ -20,7 +21,7 @@ export function SendToWallet({ config, rawLink, sessionId, onResponse }: Props) 
     setError(null)
     setRawRes(null)
     setLoading(true)
-    const { result, error: err, raw } = await sendToWallet(config, rawLink)
+    const { result, error: err, raw } = await sendToWallet(ceUrl, targetWalletDid, rawLink)
     setLoading(false)
 
     if (err) {
@@ -30,7 +31,7 @@ export function SendToWallet({ config, rawLink, sessionId, onResponse }: Props) 
 
     if (result) {
       setRawRes(result)
-      onResponse(result, result as object)
+      onResponse(result)
     }
   }
 
@@ -41,11 +42,11 @@ export function SendToWallet({ config, rawLink, sessionId, onResponse }: Props) 
       <div className="flex flex-col gap-1 text-xs text-slate-400 font-mono">
         <div className="flex gap-2">
           <span className="text-slate-500 w-24 shrink-0">Sending to:</span>
-          <span className="text-slate-300">{config.targetWalletDid}</span>
+          <span className="text-slate-300">{targetWalletDid}</span>
         </div>
         <div className="flex gap-2">
           <span className="text-slate-500 w-24 shrink-0">Via CE:</span>
-          <span className="text-slate-300">{config.targetCeUrl}/consent/request</span>
+          <span className="text-slate-300">{ceUrl}/consent/request</span>
         </div>
         {sessionId && (
           <div className="flex gap-2">

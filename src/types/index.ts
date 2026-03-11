@@ -1,11 +1,9 @@
 export interface Config {
-  myNodeId: string
-  myNodeHost: string
-  myApiKey: string
-  targetWalletDid: string
-  targetCeUrl: string
-  ceAdminKey: string
+  nodeId: string
+  apiKey: string
 }
+
+export type GetToken = () => Promise<{ token: string } | { error: string }>
 
 export interface CreateRequestResponse {
   sessionId: string
@@ -46,4 +44,3 @@ export interface HistoryEntry {
 }
 
 export type Tab = 'create' | 'existing'
-export type FlowStep = 'idle' | 'created' | 'sent' | 'polling' | 'done' | 'error'
