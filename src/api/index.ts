@@ -20,7 +20,8 @@ async function resolveToken(getToken: GetToken): Promise<{ token: string } | { e
 export async function createVpRequest(
   nodeId: string,
   getToken: GetToken,
-  dcqlQuery: object
+  dcqlQuery: object,
+  callbackUrl: string
 ): Promise<{ result?: CreateRequestResponse; error?: string; status?: number; raw?: string }> {
   const tokenResult = await resolveToken(getToken)
   if ('error' in tokenResult) return { error: tokenResult.error }
@@ -39,6 +40,12 @@ export async function createVpRequest(
         responseMode: 'direct_post',
         dcqlQuery,
         trustProfiles: ['EU Trust Framework'],
+        onComplete: {
+          url: callbackUrl,
+          dataMode: 'full',
+          mode: 'async',
+          retry: { maxAttempts: 3, delayMs: 1000 },
+        },
       }),
     })
     if (status >= 200 && status < 300) {

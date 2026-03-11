@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ConsentResponse, GetToken, ceOutcome } from '../types'
 import { fetchSessionResult } from '../api'
 import { JsonPanel } from './JsonPanel'
@@ -15,15 +15,67 @@ interface Props {
   onCredentialData: (data: unknown) => void
 }
 
+const POLL_INTERVAL_MS = 3000
+const MAX_POLL_ATTEMPTS = 100 // ~5 minutes
+
 export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, ceUrl, ceAdminKey, onCredentialData }: Props) {
   const [credData, setCredData] = useState<unknown>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [pollAttempts, setPollAttempts] = useState(0)
   const [rejectedReason, setRejectedReason] = useState<string | null>(null)
+  const stopRef = useRef(false)
 
   const outcome = ceOutcome(response)
 
-  const fetchCred = async () => {
+  const received = (data: unknown) => {
+    setLoading(false)
+    setCredData(data)
+    onCredentialData(data)
+  }
+
+  // Primary: poll /api/result (webhook callback from node)
+  useEffect(() => {
+    if (outcome !== 'auto_executed' || !sessionId) return
+    stopRef.current = false
+    setLoading(true)
+    let attempts = 0
+
+    const poll = async () => {
+      if (stopRef.current) return
+      attempts++
+      setPollAttempts(attempts)
+
+      try {
+        const res = await fetch(`/api/result?sessionId=${sessionId}`)
+        if (res.status === 200) {
+          const data = await res.json()
+          received(data)
+          return
+        }
+        if (res.status === 202 && attempts < MAX_POLL_ATTEMPTS) {
+          setTimeout(poll, POLL_INTERVAL_MS)
+          return
+        }
+        // Webhook didn't arrive — surface the error with a fallback option
+        setLoading(false)
+        setFetchError(
+          attempts >= MAX_POLL_ATTEMPTS
+            ? 'Timed out waiting for webhook callback. Try fetching from node directly.'
+            : `Webhook API returned HTTP ${res.status}. Try fetching from node directly.`
+        )
+      } catch {
+        setLoading(false)
+        setFetchError('Webhook API unavailable (is Vercel KV set up?). Try fetching from node directly.')
+      }
+    }
+
+    poll()
+    return () => { stopRef.current = true }
+  }, [])
+
+  // Fallback: direct fetch from node using sessionId
+  const fetchDirectFromNode = async () => {
     if (!sessionId) return
     setLoading(true)
     setFetchError(null)
@@ -33,16 +85,8 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
       setFetchError(`${error}${raw ? `\n${raw}` : ''}`)
       return
     }
-    setCredData(data)
-    onCredentialData(data)
+    received(data)
   }
-
-  // Auto-fetch session result as soon as auto_executed is received
-  useEffect(() => {
-    if (outcome === 'auto_executed' && sessionId) {
-      fetchCred()
-    }
-  }, [])
 
   if (outcome === 'auto_executed') {
     return (
@@ -57,16 +101,13 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
             {response.result?.status && (
               <p className="text-slate-400 text-xs">Status: <span className="text-slate-200">{response.result.status}</span></p>
             )}
-            {response.result?.redirectUri && (
-              <p className="text-slate-400 text-xs">Redirect: <span className="text-slate-300 font-mono break-all">{response.result.redirectUri}</span></p>
-            )}
           </div>
         </div>
 
         {loading && (
           <p className="text-slate-400 text-xs flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Fetching disclosed claims from node…
+            Waiting for credential data… (attempt {pollAttempts})
           </p>
         )}
 
@@ -74,11 +115,11 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
           <div className="flex flex-col gap-2">
             <pre className="text-red-400 text-xs bg-red-950 border border-red-800 rounded p-3 whitespace-pre-wrap">{fetchError}</pre>
             <button
-              onClick={fetchCred}
+              onClick={fetchDirectFromNode}
               disabled={loading}
               className="self-start px-4 py-2 bg-green-800 hover:bg-green-700 disabled:opacity-50 text-white rounded text-sm transition-colors"
             >
-              Retry
+              Fetch directly from node
             </button>
           </div>
         )}
@@ -161,7 +202,6 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     )
   }
 
-  // Unknown outcome — show raw CE response for debugging
   return (
     <div className="flex flex-col gap-3 border border-slate-700 rounded-xl p-5 bg-slate-900">
       <p className="text-slate-400 text-xs">

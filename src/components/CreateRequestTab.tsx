@@ -53,7 +53,8 @@ export function CreateRequestTab({ nodeId, getToken, onCreated }: Props) {
     }
 
     setLoading(true)
-    const { result, error: err, raw } = await createVpRequest(nodeId, getToken, query)
+    const callbackUrl = `${window.location.origin}/api/callback`
+    const { result, error: err, raw } = await createVpRequest(nodeId, getToken, query, callbackUrl)
     setLoading(false)
 
     if (err) {
