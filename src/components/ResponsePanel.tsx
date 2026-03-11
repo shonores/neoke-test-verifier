@@ -3,6 +3,7 @@ import { ConsentResponse, GetToken, ceOutcome } from '../types'
 import { fetchSessionResult } from '../api'
 import { JsonPanel } from './JsonPanel'
 import { PollingPanel } from './PollingPanel'
+import { CredentialClaimsPanel } from './CredentialClaimsPanel'
 
 interface Props {
   nodeId: string
@@ -127,7 +128,10 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
         )}
 
         {credData != null && (
-          <JsonPanel label="Disclosed Claims" data={credData} />
+          <div className="flex flex-col gap-2">
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Disclosed Claims</p>
+            <CredentialClaimsPanel data={credData} />
+          </div>
         )}
 
         <JsonPanel label="CE Response" data={response} />
@@ -157,7 +161,10 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
             <span className="text-2xl">✅</span>
             <p className="text-green-300 font-semibold text-sm">Approved — Credential Received</p>
           </div>
-          <JsonPanel label="Disclosed Claims" data={credData} />
+          <div className="flex flex-col gap-2">
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Disclosed Claims</p>
+            <CredentialClaimsPanel data={credData} />
+          </div>
         </div>
       )
     }
