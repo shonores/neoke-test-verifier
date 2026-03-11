@@ -51,6 +51,27 @@ export const DCQL_PRESETS: DcqlPreset[] = [
     },
   },
   {
+    id: 'sdjwt-epassport-copy',
+    label: 'ePassport Copy (SD-JWT)',
+    query: {
+      credentials: [
+        {
+          id: 'cred1',
+          format: 'dc+sd-jwt',
+          require_cryptographic_holder_binding: true,
+          meta: {
+            vct_values: [
+              'https://b2b-poc.id-node.neoke.com/:/vct/ePassportCopyCredential',
+            ],
+          },
+          claims: [
+            { path: ['electronicPassport'] },
+          ],
+        },
+      ],
+    },
+  },
+  {
     id: 'mdoc-age-over-18',
     label: 'mDOC Photo ID — Age Over 18 Only',
     query: {
