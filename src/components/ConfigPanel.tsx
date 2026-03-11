@@ -1,4 +1,14 @@
 import { useState } from 'react'
+
+function useCopy() {
+  const [copied, setCopied] = useState(false)
+  const copy = async (value: string) => {
+    await navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return { copied, copy }
+}
 import { Config } from '../types'
 import { deriveNodeHost, deriveMyDid } from '../hooks/useAuth'
 
@@ -10,6 +20,7 @@ interface Props {
 export function ConfigPanel({ config, onSave }: Props) {
   const [open, setOpen] = useState(!config.nodeId)
   const [draft, setDraft] = useState<Config>(config)
+  const { copied, copy } = useCopy()
 
   const nodeHost = config.nodeId ? deriveNodeHost(config.nodeId) : '—'
   const myDid = config.nodeId ? deriveMyDid(config.nodeId) : '—'
@@ -86,10 +97,17 @@ export function ConfigPanel({ config, onSave }: Props) {
       )}
 
       {!open && config.nodeId && (
-        <div className="px-5 py-2 bg-slate-900 border-t border-slate-800 flex gap-4 text-xs font-mono text-slate-600">
-          <span>DID: <span className="text-slate-500">{myDid}</span></span>
+        <div className="px-5 py-2 bg-slate-900 border-t border-slate-800 flex items-center gap-3 text-xs font-mono text-slate-600">
+          <span className="text-slate-500 shrink-0">DID:</span>
+          <span className="text-slate-400 truncate">{myDid}</span>
+          <button
+            onClick={e => { e.stopPropagation(); copy(myDid) }}
+            className="shrink-0 px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-400 transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
           <span className="text-slate-700">·</span>
-          <span>{config.apiKey ? '🔑 key saved' : <span className="text-amber-600">no key</span>}</span>
+          <span className="shrink-0">{config.apiKey ? '🔑 key saved' : <span className="text-amber-600">no key</span>}</span>
         </div>
       )}
     </div>

@@ -16,6 +16,7 @@ export function SendToWallet({ ceUrl, targetWalletDid, rawLink, sessionId, onRes
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rawRes, setRawRes] = useState<unknown>(null)
+  const [showRawLink, setShowRawLink] = useState(false)
 
   const handleSend = async () => {
     setError(null)
@@ -56,7 +57,14 @@ export function SendToWallet({ ceUrl, targetWalletDid, rawLink, sessionId, onRes
         )}
       </div>
 
-      <CopyChip label="Raw Link:" value={rawLink} />
+      <button
+        onClick={() => setShowRawLink(o => !o)}
+        className="text-xs text-slate-500 hover:text-slate-400 text-left flex items-center gap-2"
+      >
+        <span>{showRawLink ? '▼' : '▶'}</span>
+        <span>Raw Link</span>
+      </button>
+      {showRawLink && <CopyChip value={rawLink} />}
 
       {error && (
         <pre className="text-red-400 text-xs bg-red-950 border border-red-800 rounded p-3 whitespace-pre-wrap">{error}</pre>
