@@ -81,7 +81,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     if (!sessionId) return
     setLoading(true)
     setFetchError(null)
-    const { data, error, raw } = await fetchSessionResult(nodeId, apiKey, sessionId)
+    const { data, error, raw } = await fetchSessionResult(nodeId, getToken, sessionId)
     setLoading(false)
     if (error) {
       setFetchError(`${error}${raw ? `\n${raw}` : ''}`)
@@ -165,7 +165,6 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     return (
       <PollingPanel
         nodeId={nodeId}
-        apiKey={apiKey}
         getToken={getToken}
         ceUrl={ceUrl}
         ceAdminKey={ceAdminKey}

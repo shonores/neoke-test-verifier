@@ -106,44 +106,18 @@ export async function sendToWallet(
 
 export async function fetchSessionResult(
   nodeId: string,
-  apiKey: string,
+  getToken: GetToken,
   sessionId: string
 ): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const host = deriveNodeHost(nodeId)
-  const headers = { 'Authorization': `ApiKey ${apiKey}` }
+  const tokenResult = await resolveToken(getToken)
+  if ('error' in tokenResult) return { error: tokenResult.error }
 
-  // 1. Try /session/{sessionId}
+  const host = deriveNodeHost(nodeId)
+  const headers = { 'Authorization': `Bearer ${tokenResult.token}` }
+
   try {
     const { data, status, raw } = await apiFetch(
       `https://${host}/:/auth/siop/session/${sessionId}`,
-      { headers }
-    )
-    if (status !== 404) {
-      if (status >= 200 && status < 300) return { data }
-      return { error: `HTTP ${status}`, status, raw }
-    }
-  } catch (e) {
-    return { error: String(e) }
-  }
-
-  // 2. Try /status/{sessionId}
-  try {
-    const { data, status, raw } = await apiFetch(
-      `https://${host}/:/auth/siop/status/${sessionId}`,
-      { headers }
-    )
-    if (status !== 404) {
-      if (status >= 200 && status < 300) return { data }
-      return { error: `HTTP ${status}`, status, raw }
-    }
-  } catch (e) {
-    return { error: String(e) }
-  }
-
-  // 3. Fall back to /request/{id}/response
-  try {
-    const { data, status, raw } = await apiFetch(
-      `https://${host}/:/auth/siop/request/${sessionId}/response`,
       { headers }
     )
     if (status >= 200 && status < 300) return { data }

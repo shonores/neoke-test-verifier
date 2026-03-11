@@ -5,7 +5,6 @@ import { JsonPanel } from './JsonPanel'
 
 interface Props {
   nodeId: string
-  apiKey: string
   getToken: GetToken
   ceUrl: string
   ceAdminKey: string
@@ -19,7 +18,7 @@ interface Props {
 const POLL_INTERVAL_MS = 5000
 const MAX_ATTEMPTS = 60
 
-export function PollingPanel({ nodeId, apiKey, getToken, ceUrl, ceAdminKey, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
+export function PollingPanel({ nodeId, getToken, ceUrl, ceAdminKey, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
   const [attempts, setAttempts] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -52,7 +51,7 @@ export function PollingPanel({ nodeId, apiKey, getToken, ceUrl, ceAdminKey, queu
         if (item.status === 'approved') {
           clearInterval(intervalRef.current!)
           if (sessionId) {
-            const { data } = await fetchSessionResult(nodeId, apiKey, sessionId)
+            const { data } = await fetchSessionResult(nodeId, getToken, sessionId)
             onResolved(data)
           } else {
             onResolved(item)
