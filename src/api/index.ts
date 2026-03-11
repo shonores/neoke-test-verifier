@@ -46,8 +46,9 @@ export async function createVpRequest(
       return {
         result: {
           sessionId: (d.sessionId ?? d.id ?? d.session_id ?? '') as string,
-          requestUri: (d.requestUri ?? d.request_uri ?? d.rawLink ?? '') as string,
-          rawLink: (d.rawLink ?? d.requestUri ?? d.request_uri ?? '') as string,
+          requestUri: (d.requestUri ?? d.request_uri ?? '') as string,
+          // invocationUrl is the openid4vp:// link the wallet app handles
+          rawLink: (d.invocationUrl ?? d.rawLink ?? d.requestUri ?? d.request_uri ?? '') as string,
         },
       }
     }
@@ -99,29 +100,29 @@ export async function sendToWallet(
 export async function fetchSessionResult(
   nodeId: string,
   apiKey: string,
-  sessionId: string,
-  redirectUri?: string
+  sessionId: string
 ): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
   const host = deriveNodeHost(nodeId)
   const headers = { 'Authorization': `ApiKey ${apiKey}` }
 
-  // 1. Try the redirectUri from the CE response first — it contains the response_code
-  if (redirectUri) {
-    try {
-      const { data, status, raw } = await apiFetch(redirectUri, { headers })
-      if (status !== 404) {
-        if (status >= 200 && status < 300) return { data }
-        return { error: `HTTP ${status}`, status, raw }
-      }
-    } catch (e) {
-      return { error: String(e) }
-    }
-  }
-
-  // 2. Try /session/{sessionId}
+  // 1. Try /session/{sessionId}
   try {
     const { data, status, raw } = await apiFetch(
       `https://${host}/:/auth/siop/session/${sessionId}`,
+      { headers }
+    )
+    if (status !== 404) {
+      if (status >= 200 && status < 300) return { data }
+      return { error: `HTTP ${status}`, status, raw }
+    }
+  } catch (e) {
+    return { error: String(e) }
+  }
+
+  // 2. Try /status/{sessionId}
+  try {
+    const { data, status, raw } = await apiFetch(
+      `https://${host}/:/auth/siop/status/${sessionId}`,
       { headers }
     )
     if (status !== 404) {

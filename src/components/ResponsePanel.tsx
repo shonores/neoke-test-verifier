@@ -27,8 +27,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     if (!sessionId) return
     setLoading(true)
     setFetchError(null)
-    const redirectUri = response.result?.redirectUri
-    const { data, error, raw } = await fetchSessionResult(nodeId, apiKey, sessionId, redirectUri)
+    const { data, error, raw } = await fetchSessionResult(nodeId, apiKey, sessionId)
     setLoading(false)
     if (error) {
       setFetchError(`${error}${raw ? `\n${raw}` : ''}`)
