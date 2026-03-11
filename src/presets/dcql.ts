@@ -4,6 +4,9 @@ export interface DcqlPreset {
   query: object
 }
 
+const NS = 'org.iso.23220.1'
+const claim = (name: string) => ({ path: [NS, name] })
+
 export const DCQL_PRESETS: DcqlPreset[] = [
   {
     id: 'mdoc-photoid-full',
@@ -11,19 +14,18 @@ export const DCQL_PRESETS: DcqlPreset[] = [
     query: {
       credentials: [
         {
-          id: 'photo_id',
+          id: 'cred1',
           format: 'mso_mdoc',
-          meta: {
-            doctype_value: 'org.iso.23220.photoid.1',
-          },
+          require_cryptographic_holder_binding: true,
+          meta: { doctype_value: 'org.iso.23220.photoid.1' },
           claims: [
-            { namespace: 'org.iso.23220.1', claim_name: 'family_name' },
-            { namespace: 'org.iso.23220.1', claim_name: 'given_name' },
-            { namespace: 'org.iso.23220.1', claim_name: 'birth_date' },
-            { namespace: 'org.iso.23220.1', claim_name: 'document_number' },
-            { namespace: 'org.iso.23220.1', claim_name: 'issue_date' },
-            { namespace: 'org.iso.23220.1', claim_name: 'expiry_date' },
-            { namespace: 'org.iso.23220.1', claim_name: 'issuing_country' },
+            claim('family_name'),
+            claim('given_name'),
+            claim('birth_date'),
+            claim('document_number'),
+            claim('issue_date'),
+            claim('expiry_date'),
+            claim('issuing_country'),
           ],
         },
       ],
@@ -35,15 +37,14 @@ export const DCQL_PRESETS: DcqlPreset[] = [
     query: {
       credentials: [
         {
-          id: 'photo_id_min',
+          id: 'cred1',
           format: 'mso_mdoc',
-          meta: {
-            doctype_value: 'org.iso.23220.photoid.1',
-          },
+          require_cryptographic_holder_binding: true,
+          meta: { doctype_value: 'org.iso.23220.photoid.1' },
           claims: [
-            { namespace: 'org.iso.23220.1', claim_name: 'family_name' },
-            { namespace: 'org.iso.23220.1', claim_name: 'given_name' },
-            { namespace: 'org.iso.23220.1', claim_name: 'birth_date' },
+            claim('family_name'),
+            claim('given_name'),
+            claim('birth_date'),
           ],
         },
       ],
@@ -55,13 +56,12 @@ export const DCQL_PRESETS: DcqlPreset[] = [
     query: {
       credentials: [
         {
-          id: 'age_check',
+          id: 'cred1',
           format: 'mso_mdoc',
-          meta: {
-            doctype_value: 'org.iso.23220.photoid.1',
-          },
+          require_cryptographic_holder_binding: true,
+          meta: { doctype_value: 'org.iso.23220.photoid.1' },
           claims: [
-            { namespace: 'org.iso.23220.1', claim_name: 'age_over_18' },
+            claim('age_over_18'),
           ],
         },
       ],

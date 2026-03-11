@@ -33,7 +33,13 @@ export async function createVpRequest(
         'Authorization': `Bearer ${tokenResult.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ dcqlQuery }),
+      body: JSON.stringify({
+        mode: 'reference',
+        responseType: 'vp_token',
+        responseMode: 'direct_post',
+        dcqlQuery,
+        trustProfiles: ['EU Trust Framework'],
+      }),
     })
     if (status >= 200 && status < 300) {
       const d = data as Record<string, unknown>
