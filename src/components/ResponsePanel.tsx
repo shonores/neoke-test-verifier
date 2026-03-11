@@ -122,6 +122,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     return (
       <PollingPanel
         nodeId={nodeId}
+        apiKey={apiKey}
         getToken={getToken}
         ceUrl={ceUrl}
         ceAdminKey={ceAdminKey}
