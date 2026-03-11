@@ -62,7 +62,7 @@ export function ResponsePanel({ nodeId, getToken, sessionId, response, ceUrl, ce
         )}
 
         {credData != null && (
-          <JsonPanel label="VP Response / Credential Claims" data={credData} defaultOpen />
+          <JsonPanel label="VP Response / Credential Claims" data={credData} />
         )}
       </div>
     )
@@ -90,7 +90,7 @@ export function ResponsePanel({ nodeId, getToken, sessionId, response, ceUrl, ce
             <span className="text-2xl">✅</span>
             <p className="text-green-300 font-semibold text-sm">Approved — Credential Received</p>
           </div>
-          <JsonPanel label="VP Response / Credential Claims" data={credData} defaultOpen />
+          <JsonPanel label="VP Response / Credential Claims" data={credData} />
         </div>
       )
     }
@@ -136,5 +136,5 @@ export function ResponsePanel({ nodeId, getToken, sessionId, response, ceUrl, ce
     )
   }
 
-  return <JsonPanel label="Unknown CE Response" data={response} defaultOpen />
+  return <JsonPanel label="Unknown CE Response" data={response} />
 }

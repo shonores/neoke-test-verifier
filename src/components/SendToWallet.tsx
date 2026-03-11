@@ -70,7 +70,7 @@ export function SendToWallet({ ceUrl, targetWalletDid, rawLink, sessionId, onRes
         {loading ? 'Sending...' : 'Send to Wallet via CE'}
       </button>
 
-      {rawRes != null && <JsonPanel label="CE Response" data={rawRes} defaultOpen />}
+      {rawRes != null && <JsonPanel label="CE Response" data={rawRes} />}
     </div>
   )
 }

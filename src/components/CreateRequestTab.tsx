@@ -162,7 +162,7 @@ export function CreateRequestTab({ nodeId, getToken, onCreated }: Props) {
         {loading ? 'Authenticating & Creating Request...' : 'Create VP Request'}
       </button>
 
-      {rawResponse != null && <JsonPanel label="Raw Create Response" data={rawResponse} defaultOpen />}
+      {rawResponse != null && <JsonPanel label="Raw Create Response" data={rawResponse} />}
     </div>
   )
 }
