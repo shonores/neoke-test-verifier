@@ -57,12 +57,14 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
           setTimeout(poll, POLL_INTERVAL_MS)
           return
         }
-        // Webhook didn't arrive — surface the error with a fallback option
+        // Webhook didn't arrive or API errored — surface with fallback option
         setLoading(false)
+        let detail = `HTTP ${res.status}`
+        try { const body = await res.json(); detail = (body as {error?: string}).error ?? detail } catch {}
         setFetchError(
           attempts >= MAX_POLL_ATTEMPTS
             ? 'Timed out waiting for webhook callback. Try fetching from node directly.'
-            : `Webhook API returned HTTP ${res.status}. Try fetching from node directly.`
+            : `Webhook API error: ${detail}. Try fetching from node directly.`
         )
       } catch {
         setLoading(false)
