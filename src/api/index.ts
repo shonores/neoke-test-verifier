@@ -93,12 +93,26 @@ export async function sendToWallet(
 export async function fetchSessionResult(
   nodeId: string,
   apiKey: string,
-  sessionId: string
+  sessionId: string,
+  redirectUri?: string
 ): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
   const host = deriveNodeHost(nodeId)
   const headers = { 'Authorization': `ApiKey ${apiKey}` }
 
-  // Try /session/ endpoint first
+  // 1. Try the redirectUri from the CE response first — it contains the response_code
+  if (redirectUri) {
+    try {
+      const { data, status, raw } = await apiFetch(redirectUri, { headers })
+      if (status !== 404) {
+        if (status >= 200 && status < 300) return { data }
+        return { error: `HTTP ${status}`, status, raw }
+      }
+    } catch (e) {
+      return { error: String(e) }
+    }
+  }
+
+  // 2. Try /session/{sessionId}
   try {
     const { data, status, raw } = await apiFetch(
       `https://${host}/:/auth/siop/session/${sessionId}`,
@@ -112,7 +126,7 @@ export async function fetchSessionResult(
     return { error: String(e) }
   }
 
-  // Fall back to /request/{id}/response
+  // 3. Fall back to /request/{id}/response
   try {
     const { data, status, raw } = await apiFetch(
       `https://${host}/:/auth/siop/request/${sessionId}/response`,
