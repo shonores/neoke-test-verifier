@@ -12,9 +12,15 @@ export interface CreateRequestResponse {
 }
 
 export interface ConsentResponse {
-  outcome: 'auto_executed' | 'queued' | 'rejected'
+  // Real CE uses "action"; "outcome" kept for any older responses
+  action?: string
+  outcome?: string
   ruleLabel?: string
   reason?: string
+  result?: {
+    status?: string
+    redirectUri?: string
+  }
   queuedItem?: {
     id: string
     issuer?: string
@@ -22,6 +28,11 @@ export interface ConsentResponse {
     requestedClaims?: string[]
     status?: string
   }
+  [key: string]: unknown
+}
+
+export function ceOutcome(r: ConsentResponse): string {
+  return r.action ?? r.outcome ?? ''
 }
 
 export interface QueueItem {

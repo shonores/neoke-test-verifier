@@ -28,7 +28,7 @@ export function ExistingLinkTab({ onReady }: Props) {
           value={link}
           onChange={e => setLink(e.target.value)}
           rows={4}
-          placeholder="openid4vp://... or https://b2b-poc.id-node.neoke.com/:/auth/siop/verification-link/…/request"
+          placeholder="openid4vp://... or https://<node>.id-node.neoke.com/:/auth/siop/verification-link/…/request"
           className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-xs text-cyan-400 font-mono focus:outline-none focus:border-cyan-600 resize-y"
         />
       </div>

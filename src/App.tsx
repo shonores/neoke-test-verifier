@@ -135,6 +135,7 @@ export default function App() {
         {flow.ceResponse && (
           <ResponsePanel
             nodeId={config.nodeId}
+            apiKey={config.apiKey}
             getToken={getToken}
             sessionId={flow.sessionId}
             response={flow.ceResponse}
