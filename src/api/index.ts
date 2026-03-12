@@ -114,7 +114,7 @@ export async function fetchSessionResult(
 
   try {
     const { data, status, raw } = await apiFetch(
-      `https://${host}/:/auth/siop/session/${sessionId}/result`,
+      `https://${host}/:/auth/siop/session/${sessionId}`,
       { headers }
     )
     if (status >= 200 && status < 300) return { data }
