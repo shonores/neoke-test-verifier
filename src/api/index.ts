@@ -106,18 +106,15 @@ export async function sendToWallet(
 
 export async function fetchSessionResult(
   nodeId: string,
-  getToken: GetToken,
+  apiKey: string,
   sessionId: string
 ): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const tokenResult = await resolveToken(getToken)
-  if ('error' in tokenResult) return { error: tokenResult.error }
-
   const host = deriveNodeHost(nodeId)
-  const headers = { 'Authorization': `Bearer ${tokenResult.token}` }
+  const headers = { 'Authorization': `ApiKey ${apiKey}` }
 
   try {
     const { data, status, raw } = await apiFetch(
-      `https://${host}/:/auth/siop/session/${sessionId}`,
+      `https://${host}/:/auth/siop/session/${sessionId}/result`,
       { headers }
     )
     if (status >= 200 && status < 300) return { data }
@@ -130,13 +127,10 @@ export async function fetchSessionResult(
 export async function pollQueueItem(
   ceUrl: string,
   itemId: string,
-  ceAdminKey: string
 ): Promise<{ item?: QueueItem; error?: string; status?: number; raw?: string }> {
-  const url = `${ceUrl}/queue/${itemId}`
+  const url = `${ceUrl}/queue/${itemId}/status`
   try {
-    const headers: Record<string, string> = {}
-    if (ceAdminKey) headers['Authorization'] = `Bearer ${ceAdminKey}`
-    const { data, status, raw } = await apiFetch(url, { headers })
+    const { data, status, raw } = await apiFetch(url)
     if (status >= 200 && status < 300) return { item: data as QueueItem }
     return { error: `HTTP ${status}`, status, raw }
   } catch (e) {

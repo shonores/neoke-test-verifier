@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { GetToken, QueueItem } from '../types'
+import { QueueItem } from '../types'
 import { pollQueueItem, fetchSessionResult } from '../api'
 import { JsonPanel } from './JsonPanel'
 
 interface Props {
   nodeId: string
-  getToken: GetToken
+  apiKey: string
   ceUrl: string
-  ceAdminKey: string
   queueItemId: string
   sessionId?: string
   queuePreview?: { issuer?: string; credentialTypes?: string[]; requestedClaims?: string[] }
@@ -18,7 +17,7 @@ interface Props {
 const POLL_INTERVAL_MS = 5000
 const MAX_ATTEMPTS = 60
 
-export function PollingPanel({ nodeId, getToken, ceUrl, ceAdminKey, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
+export function PollingPanel({ nodeId, apiKey, ceUrl, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
   const [attempts, setAttempts] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -35,7 +34,7 @@ export function PollingPanel({ nodeId, getToken, ceUrl, ceAdminKey, queueItemId,
     const tick = async () => {
       setElapsed(Math.floor((Date.now() - startTime.current) / 1000))
 
-      const { item, error } = await pollQueueItem(ceUrl, queueItemId, ceAdminKey)
+      const { item, error } = await pollQueueItem(ceUrl, queueItemId)
 
       if (error) {
         setPollError(error)
@@ -48,20 +47,18 @@ export function PollingPanel({ nodeId, getToken, ceUrl, ceAdminKey, queueItemId,
         attemptsRef.current += 1
         setAttempts(attemptsRef.current)
 
-        if (item.status === 'approved') {
+        if (item.status !== 'pending') {
           clearInterval(intervalRef.current!)
-          if (sessionId) {
-            const { data } = await fetchSessionResult(nodeId, getToken, sessionId)
-            onResolved(data)
+          if (item.status === 'approved') {
+            if (sessionId) {
+              const { data } = await fetchSessionResult(nodeId, apiKey, sessionId)
+              onResolved(data)
+            } else {
+              onResolved(item)
+            }
           } else {
-            onResolved(item)
+            onRejected(`Queue item ${item.status}`)
           }
-          return
-        }
-
-        if (item.status === 'rejected' || item.status === 'expired') {
-          clearInterval(intervalRef.current!)
-          onRejected(`Queue item ${item.status}`)
           return
         }
       }
