@@ -23,10 +23,14 @@ export interface ConsentResponse {
   }
   queuedItem?: {
     id: string
+    status?: string
+    credentialType?: string
+    matchedCredentials?: { id: string; type: string[]; issuer: string }[]
+    requestedFields?: string[]
+    // legacy fallback fields
     issuer?: string
     credentialTypes?: string[]
     requestedClaims?: string[]
-    status?: string
   }
   [key: string]: unknown
 }
@@ -37,10 +41,10 @@ export function ceOutcome(r: ConsentResponse): string {
 
 export interface QueueItem {
   id: string
-  status: 'pending' | 'approved' | 'rejected' | 'expired'
-  issuer?: string
-  credentialTypes?: string[]
-  requestedClaims?: string[]
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'error'
+  resolvedAt?: string
+  vpRequestExpiresAt?: string
+  isExpired?: boolean
   [key: string]: unknown
 }
 

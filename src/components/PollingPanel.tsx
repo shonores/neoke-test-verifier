@@ -9,7 +9,15 @@ interface Props {
   ceUrl: string
   queueItemId: string
   sessionId?: string
-  queuePreview?: { issuer?: string; credentialTypes?: string[]; requestedClaims?: string[] }
+  queuePreview?: {
+    credentialType?: string
+    matchedCredentials?: { id: string; type: string[]; issuer: string }[]
+    requestedFields?: string[]
+    // legacy fallback fields
+    issuer?: string
+    credentialTypes?: string[]
+    requestedClaims?: string[]
+  }
   onResolved: (credentialData: unknown) => void
   onRejected: (reason: string) => void
 }
@@ -93,12 +101,18 @@ export function PollingPanel({ nodeId, apiKey, ceUrl, queueItemId, sessionId, qu
 
       {queuePreview && (
         <div className="text-xs text-slate-400 space-y-1">
-          {queuePreview.issuer && <div><span className="text-slate-500">Issuer:</span> {queuePreview.issuer}</div>}
-          {queuePreview.credentialTypes?.length && (
-            <div><span className="text-slate-500">Types:</span> {queuePreview.credentialTypes.join(', ')}</div>
+          {(queuePreview.credentialType ?? queuePreview.credentialTypes?.[0]) && (
+            <div><span className="text-slate-500">Type:</span> {queuePreview.credentialType ?? queuePreview.credentialTypes![0]}</div>
           )}
-          {queuePreview.requestedClaims?.length && (
-            <div><span className="text-slate-500">Claims:</span> {queuePreview.requestedClaims.join(', ')}</div>
+          {queuePreview.matchedCredentials?.length ? (
+            queuePreview.matchedCredentials.map(c => (
+              <div key={c.id}><span className="text-slate-500">Issuer:</span> {c.issuer}</div>
+            ))
+          ) : queuePreview.issuer ? (
+            <div><span className="text-slate-500">Issuer:</span> {queuePreview.issuer}</div>
+          ) : null}
+          {(queuePreview.requestedFields ?? queuePreview.requestedClaims)?.length && (
+            <div><span className="text-slate-500">Claims:</span> {(queuePreview.requestedFields ?? queuePreview.requestedClaims)!.join(', ')}</div>
           )}
         </div>
       )}
