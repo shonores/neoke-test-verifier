@@ -106,16 +106,17 @@ export async function sendToWallet(
 
 export async function fetchSessionResult(
   nodeId: string,
-  apiKey: string,
+  getToken: GetToken,
   sessionId: string
 ): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const host = deriveNodeHost(nodeId)
-  const headers = { 'Authorization': `ApiKey ${apiKey}` }
+  const tokenResult = await resolveToken(getToken)
+  if ('error' in tokenResult) return { error: tokenResult.error }
 
+  const host = deriveNodeHost(nodeId)
   try {
     const { data, status, raw } = await apiFetch(
       `https://${host}/:/auth/siop/session/${sessionId}`,
-      { headers }
+      { headers: { 'Authorization': `Bearer ${tokenResult.token}` } }
     )
     if (status >= 200 && status < 300) return { data }
     return { error: `HTTP ${status}`, status, raw }

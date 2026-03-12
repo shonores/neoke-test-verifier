@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { QueueItem } from '../types'
+import { QueueItem, GetToken } from '../types'
 import { pollQueueItem, fetchSessionResult } from '../api'
 import { JsonPanel } from './JsonPanel'
 
 interface Props {
   nodeId: string
-  apiKey: string
+  getToken: GetToken
   ceUrl: string
   queueItemId: string
   sessionId?: string
@@ -25,7 +25,7 @@ interface Props {
 const POLL_INTERVAL_MS = 5000
 const MAX_ATTEMPTS = 60
 
-export function PollingPanel({ nodeId, apiKey, ceUrl, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
+export function PollingPanel({ nodeId, getToken, ceUrl, queueItemId, sessionId, queuePreview, onResolved, onRejected }: Props) {
   const [attempts, setAttempts] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -59,7 +59,7 @@ export function PollingPanel({ nodeId, apiKey, ceUrl, queueItemId, sessionId, qu
           clearInterval(intervalRef.current!)
           if (item.status === 'approved') {
             if (sessionId) {
-              const { data } = await fetchSessionResult(nodeId, apiKey, sessionId)
+              const { data } = await fetchSessionResult(nodeId, getToken, sessionId)
               onResolved(data)
             } else {
               onResolved(item)

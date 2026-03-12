@@ -34,7 +34,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
   useEffect(() => {
     if (outcome !== 'auto_executed' || !sessionId) return
     setLoading(true)
-    fetchSessionResult(nodeId, apiKey, sessionId).then(({ data, error, raw }) => {
+    fetchSessionResult(nodeId, getToken, sessionId).then(({ data, error, raw }) => {
       if (error) {
         setLoading(false)
         setFetchError(`${error}${raw ? `\n${raw}` : ''}`)
@@ -118,7 +118,7 @@ export function ResponsePanel({ nodeId, apiKey, getToken, sessionId, response, c
     return (
       <PollingPanel
         nodeId={nodeId}
-        apiKey={apiKey}
+        getToken={getToken}
         ceUrl={ceUrl}
         queueItemId={response.queuedItem!.id}
         sessionId={sessionId}
