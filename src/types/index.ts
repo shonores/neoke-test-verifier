@@ -1,61 +1,24 @@
 export interface Config {
-  nodeId: string
-  apiKey: string
+  ceUrl: string
+  ceApiKey: string
 }
 
-export type GetToken = () => Promise<{ token: string } | { error: string }>
-
-export interface CreateRequestResponse {
-  sessionId: string
-  requestUri: string
-  rawLink?: string
-}
-
-export interface ConsentResponse {
-  // Real CE uses "action"; "outcome" kept for any older responses
-  action?: string
-  outcome?: string
-  ruleLabel?: string
+export interface VerifyResponse {
+  action: 'auto_executed' | 'approved' | 'rejected' | 'timeout' | 'error'
+  claims?: unknown
   reason?: string
-  result?: {
-    status?: string
-    redirectUri?: string
-  }
-  queuedItem?: {
-    id: string
-    status?: string
-    credentialType?: string
-    matchedCredentials?: { id: string; type: string[]; issuer: string }[]
-    requestedFields?: string[]
-    // legacy fallback fields
-    issuer?: string
-    credentialTypes?: string[]
-    requestedClaims?: string[]
-  }
-  [key: string]: unknown
-}
-
-export function ceOutcome(r: ConsentResponse): string {
-  return r.action ?? r.outcome ?? ''
-}
-
-export interface QueueItem {
-  id: string
-  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'error'
-  resolvedAt?: string
-  vpRequestExpiresAt?: string
-  isExpired?: boolean
-  [key: string]: unknown
+  requestId?: string
+  nodeId?: string
 }
 
 export interface HistoryEntry {
   id: string
   timestamp: string
   targetEmail: string
-  sessionId?: string
-  rawLink?: string
-  outcome?: string
-  credentialData?: unknown
+  credentialType: string
+  action?: string
+  requestId?: string
+  claims?: unknown
 }
 
-export type Tab = 'create' | 'existing'
+export type Tab = 'create'

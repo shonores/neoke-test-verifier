@@ -4,8 +4,8 @@ import { Config } from '../types'
 const STORAGE_KEY = 'neoke_verifier_config'
 
 const DEFAULTS: Config = {
-  nodeId: '',
-  apiKey: '',
+  ceUrl: 'https://neoke-consent-engine.fly.dev',
+  ceApiKey: '',
 }
 
 export function useConfig() {

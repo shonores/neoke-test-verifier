@@ -3,16 +3,17 @@ import { HistoryEntry } from '../types'
 interface Props {
   history: HistoryEntry[]
   onClear: () => void
-  onRestore: (entry: HistoryEntry) => void
 }
 
-const OUTCOME_STYLES: Record<string, string> = {
+const ACTION_STYLES: Record<string, string> = {
   auto_executed: 'bg-green-900/50 text-green-400',
-  queued: 'bg-amber-900/50 text-amber-400',
+  approved: 'bg-green-900/50 text-green-400',
   rejected: 'bg-red-900/50 text-red-400',
+  timeout: 'bg-amber-900/50 text-amber-400',
+  error: 'bg-red-900/50 text-red-400',
 }
 
-export function HistoryPanel({ history, onClear, onRestore }: Props) {
+export function HistoryPanel({ history, onClear }: Props) {
   if (history.length === 0) return null
 
   return (
@@ -29,16 +30,15 @@ export function HistoryPanel({ history, onClear, onRestore }: Props) {
 
       <div className="flex flex-col gap-2">
         {history.map(entry => (
-          <button
+          <div
             key={entry.id}
-            onClick={() => onRestore(entry)}
-            className="flex items-center gap-3 p-3 bg-slate-800 border border-slate-700 rounded-lg text-left hover:border-slate-500 transition-colors group"
+            className="flex items-center gap-3 p-3 bg-slate-800 border border-slate-700 rounded-lg text-left"
           >
             <div className="flex flex-col gap-1 flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                {entry.outcome && (
-                  <span className={`text-xs px-2 py-0.5 rounded font-mono ${OUTCOME_STYLES[entry.outcome] ?? 'bg-slate-700 text-slate-300'}`}>
-                    {entry.outcome}
+                {entry.action && (
+                  <span className={`text-xs px-2 py-0.5 rounded font-mono ${ACTION_STYLES[entry.action] ?? 'bg-slate-700 text-slate-300'}`}>
+                    {entry.action}
                   </span>
                 )}
                 <span className="text-slate-500 text-xs font-mono">
@@ -46,12 +46,12 @@ export function HistoryPanel({ history, onClear, onRestore }: Props) {
                 </span>
               </div>
               <span className="text-slate-300 text-xs font-mono truncate">{entry.targetEmail}</span>
-              {entry.sessionId && (
-                <span className="text-slate-500 text-xs font-mono">Session: {entry.sessionId}</span>
+              <span className="text-slate-500 text-xs font-mono truncate">{entry.credentialType}</span>
+              {entry.requestId && (
+                <span className="text-slate-600 text-xs font-mono">id: {entry.requestId}</span>
               )}
             </div>
-            <span className="text-slate-600 group-hover:text-slate-400 text-xs shrink-0">Restore →</span>
-          </button>
+          </div>
         ))}
       </div>
     </div>

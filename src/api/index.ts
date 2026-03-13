@@ -1,140 +1,64 @@
-import { GetToken, CreateRequestResponse, ConsentResponse, QueueItem } from '../types'
-import { deriveNodeHost } from '../hooks/useAuth'
+import { VerifyResponse } from '../types'
 
-async function apiFetch(url: string, options: RequestInit = {}): Promise<{ data: unknown; status: number; raw: string }> {
-  const res = await fetch(url, options)
-  const raw = await res.text()
-  let data: unknown
+const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev'
+
+export async function verify(
+  ceUrl: string,
+  ceApiKey: string,
+  to: string,
+  credentialType: string,
+  dcqlQuery?: object
+): Promise<{ result?: VerifyResponse; error?: string; raw?: string }> {
+  const url = `${ceUrl || DEFAULT_CE_URL}/v1/verify`
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 90_000)
+
   try {
-    data = JSON.parse(raw)
-  } catch {
-    data = raw
-  }
-  return { data, status: res.status, raw }
-}
+    const body: Record<string, unknown> = { to, credentialType }
+    if (dcqlQuery) body.dcqlQuery = dcqlQuery
 
-async function resolveToken(getToken: GetToken): Promise<{ token: string } | { error: string }> {
-  return getToken()
-}
-
-export async function createVpRequest(
-  nodeId: string,
-  getToken: GetToken,
-  dcqlQuery: object,
-  callbackUrl: string
-): Promise<{ result?: CreateRequestResponse; error?: string; status?: number; raw?: string }> {
-  const tokenResult = await resolveToken(getToken)
-  if ('error' in tokenResult) return { error: tokenResult.error }
-
-  const url = `https://${deriveNodeHost(nodeId)}/:/auth/siop/request`
-  try {
-    const { data, status, raw } = await apiFetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${tokenResult.token}`,
+        Authorization: `ApiKey ${ceApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        mode: 'reference',
-        responseType: 'vp_token',
-        responseMode: 'direct_post',
-        dcqlQuery,
-        trustProfiles: ['EU Trust Framework'],
-        onComplete: {
-          url: callbackUrl,
-          dataMode: 'full',
-          mode: 'async',
-          retry: { maxAttempts: 3, delayMs: 1000 },
-        },
-      }),
+      body: JSON.stringify(body),
+      signal: controller.signal,
     })
-    if (status >= 200 && status < 300) {
-      const d = data as Record<string, unknown>
-      return {
-        result: {
-          sessionId: (d.sessionId ?? d.id ?? d.session_id ?? '') as string,
-          requestUri: (d.requestUri ?? d.request_uri ?? '') as string,
-          // invocationUrl is the openid4vp:// link the wallet app handles
-          rawLink: (d.invocationUrl ?? d.rawLink ?? d.requestUri ?? d.request_uri ?? '') as string,
-        },
-      }
+
+    const raw = await res.text()
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      parsed = raw
     }
-    return { error: `HTTP ${status}`, status, raw }
-  } catch (e) {
+
+    if (res.ok) {
+      return { result: parsed as VerifyResponse }
+    }
+    return { error: `HTTP ${res.status}`, raw }
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return { error: 'Request timed out after 90 seconds' }
+    }
     return { error: String(e) }
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
-export async function fetchVpResponse(
-  nodeId: string,
-  getToken: GetToken,
-  sessionId: string
-): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const tokenResult = await resolveToken(getToken)
-  if ('error' in tokenResult) return { error: tokenResult.error }
-
-  const url = `https://${deriveNodeHost(nodeId)}/:/auth/siop/request/${sessionId}/response`
+export async function listCredentialTypes(
+  ceUrl: string
+): Promise<{ id: string; label: string }[]> {
+  const url = `${ceUrl || DEFAULT_CE_URL}/v1/credential-types`
   try {
-    const { data, status, raw } = await apiFetch(url, {
-      headers: { 'Authorization': `Bearer ${tokenResult.token}` },
-    })
-    if (status >= 200 && status < 300) return { data }
-    return { error: `HTTP ${status}`, status, raw }
-  } catch (e) {
-    return { error: String(e) }
-  }
-}
-
-export async function sendToWallet(
-  ceUrl: string,
-  targetWalletDid: string,
-  rawLink: string
-): Promise<{ result?: ConsentResponse; error?: string; status?: number; raw?: string }> {
-  const url = `${ceUrl}/consent/request`
-  try {
-    const { data, status, raw } = await apiFetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: targetWalletDid, rawLink }),
-    })
-    if (status >= 200 && status < 300) return { result: data as ConsentResponse }
-    return { error: `HTTP ${status}`, status, raw }
-  } catch (e) {
-    return { error: String(e) }
-  }
-}
-
-export async function fetchSessionResult(
-  nodeId: string,
-  getToken: GetToken,
-  sessionId: string
-): Promise<{ data?: unknown; error?: string; status?: number; raw?: string }> {
-  const tokenResult = await resolveToken(getToken)
-  if ('error' in tokenResult) return { error: tokenResult.error }
-
-  const host = deriveNodeHost(nodeId)
-  try {
-    const { data, status, raw } = await apiFetch(
-      `https://${host}/:/auth/siop/session/${sessionId}`,
-      { headers: { 'Authorization': `Bearer ${tokenResult.token}` } }
-    )
-    if (status >= 200 && status < 300) return { data }
-    return { error: `HTTP ${status}`, status, raw }
-  } catch (e) {
-    return { error: String(e) }
-  }
-}
-
-export async function pollQueueItem(
-  ceUrl: string,
-  itemId: string,
-): Promise<{ item?: QueueItem; error?: string; status?: number; raw?: string }> {
-  const url = `${ceUrl}/queue/${itemId}/status`
-  try {
-    const { data, status, raw } = await apiFetch(url)
-    if (status >= 200 && status < 300) return { item: data as QueueItem }
-    return { error: `HTTP ${status}`, status, raw }
-  } catch (e) {
-    return { error: String(e) }
+    const res = await fetch(url)
+    if (!res.ok) return []
+    const data = (await res.json()) as { credentialTypes?: { id: string; label: string }[] }
+    return data.credentialTypes ?? []
+  } catch {
+    return []
   }
 }
