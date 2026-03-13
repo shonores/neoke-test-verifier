@@ -151,10 +151,37 @@ export function CreateRequestTab({ config, onComplete }: Props) {
         </div>
       )}
 
-      {/* Claims JSON */}
-      {result?.claims !== undefined && (
-        <JsonPanel label="Claims" data={result.claims} defaultOpen />
-      )}
+      {/* Claims table */}
+      {result?.claims !== undefined && (() => {
+        const claims = result.claims as Record<string, unknown>
+        const entries = Object.entries(claims)
+        return (
+          <div className="flex flex-col gap-2">
+            <div className="border border-slate-700 rounded-lg overflow-hidden">
+              <div style={{ background: '#1e293b', padding: '8px 16px', borderBottom: '1px solid #334155' }}>
+                <span style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace' }}>Verified Claims</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {entries.map(([key, value], i) => (
+                    <tr key={key} style={{ borderBottom: i < entries.length - 1 ? '1px solid #1e293b' : 'none' }}>
+                      <td style={{ padding: '7px 16px', width: '40%', color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace', background: '#0f172a' }}>
+                        {key.replace(/_/g, ' ')}
+                      </td>
+                      <td style={{ padding: '7px 16px', color: '#e2e8f0', fontSize: '12px', fontFamily: 'monospace', background: '#0f172a' }}>
+                        {typeof value === 'object' && value !== null
+                          ? JSON.stringify(value)
+                          : String(value ?? '')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <JsonPanel label="Raw JSON" data={result.claims} />
+          </div>
+        )
+      })()}
     </div>
   )
 }
