@@ -6,7 +6,7 @@ import { HistoryPanel } from './components/HistoryPanel'
 import { VerifyResponse } from './types'
 
 export default function App() {
-  const { config, saveConfig } = useConfig()
+  const { config, saveConfig, isBaked } = useConfig()
   const { history, addEntry, clearHistory } = useHistory()
 
   const handleComplete = (email: string, credentialType: string, result: VerifyResponse) => {
@@ -29,8 +29,8 @@ export default function App() {
           <p className="text-slate-500 text-xs mt-0.5">Send a verification request via the Consent Engine /v1/verify endpoint</p>
         </div>
 
-        {/* Config */}
-        <ConfigPanel config={config} onSave={saveConfig} />
+        {/* Config — hidden when CE URL + API key are baked in via env vars */}
+        {!isBaked && <ConfigPanel config={config} onSave={saveConfig} />}
 
         {/* Verify form */}
         <div className="border border-slate-700 rounded-xl p-5 bg-slate-900">
