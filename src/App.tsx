@@ -15,7 +15,7 @@ const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev'
 type FlowState = {
   sessionId?: string
   rawLink?: string
-  targetWalletDid?: string
+  targetWalletEmail?: string
   ceUrl?: string
   ceAdminKey?: string
   ceResponse?: ConsentResponse
@@ -32,17 +32,17 @@ export default function App() {
 
   const resetFlow = () => setFlow({})
 
-  const handleCreated = (sessionId: string, rawLink: string, targetWalletDid: string, ceUrl: string, ceAdminKey: string) => {
-    setFlow({ sessionId, rawLink, targetWalletDid, ceUrl, ceAdminKey })
+  const handleCreated = (sessionId: string, rawLink: string, targetWalletEmail: string, ceUrl: string, ceAdminKey: string) => {
+    setFlow({ sessionId, rawLink, targetWalletEmail, ceUrl, ceAdminKey })
   }
 
-  const handleLinkReady = (rawLink: string) => {
-    setFlow({ rawLink, ceUrl: DEFAULT_CE_URL, ceAdminKey: '' })
+  const handleLinkReady = (rawLink: string, targetWalletEmail: string) => {
+    setFlow({ rawLink, targetWalletEmail, ceUrl: DEFAULT_CE_URL, ceAdminKey: '' })
   }
 
   const handleCeResponse = (response: ConsentResponse) => {
     const entryId = addEntry({
-      targetDid: flow.targetWalletDid ?? '',
+      targetEmail: flow.targetWalletEmail ?? '',
       sessionId: flow.sessionId,
       rawLink: flow.rawLink,
       outcome: response.outcome,
@@ -61,7 +61,7 @@ export default function App() {
     setFlow({
       sessionId: entry.sessionId,
       rawLink: entry.rawLink,
-      targetWalletDid: entry.targetDid,
+      targetWalletEmail: entry.targetEmail,
       ceUrl: DEFAULT_CE_URL,
       ceAdminKey: '',
     })
@@ -124,7 +124,7 @@ export default function App() {
         {flow.rawLink && !flow.ceResponse && (
           <SendToWallet
             ceUrl={flow.ceUrl ?? DEFAULT_CE_URL}
-            targetWalletDid={flow.targetWalletDid ?? ''}
+            targetWalletDid={flow.targetWalletEmail ?? ''}
             rawLink={flow.rawLink}
             sessionId={flow.sessionId}
             onResponse={handleCeResponse}

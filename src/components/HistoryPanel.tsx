@@ -45,7 +45,7 @@ export function HistoryPanel({ history, onClear, onRestore }: Props) {
                   {new Date(entry.timestamp).toLocaleString()}
                 </span>
               </div>
-              <span className="text-slate-300 text-xs font-mono truncate">{entry.targetDid}</span>
+              <span className="text-slate-300 text-xs font-mono truncate">{entry.targetEmail}</span>
               {entry.sessionId && (
                 <span className="text-slate-500 text-xs font-mono">Session: {entry.sessionId}</span>
               )}

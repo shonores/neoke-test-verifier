@@ -51,7 +51,7 @@ export interface QueueItem {
 export interface HistoryEntry {
   id: string
   timestamp: string
-  targetDid: string
+  targetEmail: string
   sessionId?: string
   rawLink?: string
   outcome?: string

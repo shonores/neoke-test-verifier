@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
 interface Props {
-  onReady: (rawLink: string) => void
+  onReady: (rawLink: string, targetEmail: string) => void
 }
 
 export function ExistingLinkTab({ onReady }: Props) {
   const [link, setLink] = useState('')
+  const [targetEmail, setTargetEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = () => {
@@ -15,11 +16,26 @@ export function ExistingLinkTab({ onReady }: Props) {
       setError('Please paste a verification link.')
       return
     }
-    onReady(trimmed)
+    if (!targetEmail.trim()) {
+      setError('Target Wallet Email is required.')
+      return
+    }
+    onReady(trimmed, targetEmail.trim())
   }
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-slate-400">Target Wallet Email</label>
+        <input
+          type="email"
+          value={targetEmail}
+          onChange={e => setTargetEmail(e.target.value)}
+          placeholder="user@example.com"
+          className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-600 placeholder:text-slate-600"
+        />
+      </div>
+
       <div className="flex flex-col gap-2">
         <label className="text-xs text-slate-400">
           Verification Link (openid4vp:// or https://…/request)

@@ -9,14 +9,14 @@ const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev'
 interface Props {
   nodeId: string
   getToken: GetToken
-  onCreated: (sessionId: string, rawLink: string, targetWalletDid: string, ceUrl: string, ceAdminKey: string) => void
+  onCreated: (sessionId: string, rawLink: string, targetWalletEmail: string, ceUrl: string, ceAdminKey: string) => void
 }
 
 export function CreateRequestTab({ nodeId, getToken, onCreated }: Props) {
   const [presetId, setPresetId] = useState(DCQL_PRESETS[0].id)
   const [customJson, setCustomJson] = useState('')
   const [showCustom, setShowCustom] = useState(false)
-  const [targetWalletDid, setTargetWalletDid] = useState('')
+  const [targetWalletEmail, setTargetWalletEmail] = useState('')
   const [showCeSettings, setShowCeSettings] = useState(false)
   const [ceUrl, setCeUrl] = useState(DEFAULT_CE_URL)
   const [ceAdminKey, setCeAdminKey] = useState('')
@@ -47,8 +47,8 @@ export function CreateRequestTab({ nodeId, getToken, onCreated }: Props) {
       setError('Node ID is required. Open Configuration above.')
       return
     }
-    if (!targetWalletDid.trim()) {
-      setError('Target Wallet DID is required.')
+    if (!targetWalletEmail.trim()) {
+      setError('Target Wallet Email is required.')
       return
     }
 
@@ -64,21 +64,21 @@ export function CreateRequestTab({ nodeId, getToken, onCreated }: Props) {
 
     if (result) {
       setRawResponse(result)
-      onCreated(result.sessionId, result.rawLink || result.requestUri, targetWalletDid.trim(), ceUrl, ceAdminKey)
+      onCreated(result.sessionId, result.rawLink || result.requestUri, targetWalletEmail.trim(), ceUrl, ceAdminKey)
     }
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Target wallet DID */}
+      {/* Target wallet email */}
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400">Target Wallet DID</label>
+        <label className="text-xs text-slate-400">Target Wallet Email</label>
         <input
-          type="text"
-          value={targetWalletDid}
-          onChange={e => setTargetWalletDid(e.target.value)}
-          placeholder="did:web:someone.id-node.neoke.com"
-          className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-cyan-600 placeholder:text-slate-600"
+          type="email"
+          value={targetWalletEmail}
+          onChange={e => setTargetWalletEmail(e.target.value)}
+          placeholder="user@example.com"
+          className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-600 placeholder:text-slate-600"
         />
       </div>
 

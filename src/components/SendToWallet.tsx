@@ -6,7 +6,7 @@ import { JsonPanel } from './JsonPanel'
 
 interface Props {
   ceUrl: string
-  targetWalletDid: string
+  targetWalletDid: string   // accepts email or DID
   rawLink: string
   sessionId?: string
   onResponse: (response: ConsentResponse) => void
@@ -42,7 +42,7 @@ export function SendToWallet({ ceUrl, targetWalletDid, rawLink, sessionId, onRes
 
       <div className="flex flex-col gap-1 text-xs text-slate-400 font-mono">
         <div className="flex gap-2">
-          <span className="text-slate-500 w-24 shrink-0">Sending to:</span>
+          <span className="text-slate-500 w-24 shrink-0">To (email):</span>
           <span className="text-slate-300">{targetWalletDid}</span>
         </div>
         <div className="flex gap-2">
